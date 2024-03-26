@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const app = express();
 const port = process.env.PORT || 5000;
@@ -28,12 +28,80 @@ async function run() {
     await client.connect();
 
     const serviceCollection = client.db("carDoctor").collection("services");
+
+    const bookingCollection = client.db("carDoctor").collection("booking");
     
     app.get('/services', async(req, res)=>{
         const cursor = serviceCollection.find();
         const result = await cursor.toArray();
         res.send(result);
     })
+
+    // get single data 
+    app.get('/services/:id', async(req,res)=>{
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await serviceCollection.findOne(query);
+        res.send(result);
+    })
+
+    // get data from client side checkout form 
+    app.post('/booking', async(req,res)=>{
+      const booking = req.body;
+      const result = await bookingCollection.insertOne(booking);
+      res.send(result);
+    })
+
+    app.get('/booking', async(req,res)=>{     
+      // console.log(req.query);
+      let query = {};
+      if(req.query?.email){
+        query = { email: req.query.email };
+        console.log(query);
+      }
+      const result = await bookingCollection.find(query).toArray();
+      res.send(result);
+    })
+
+
+    app.get('/booking/:id',async(req, res)=>{
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await bookingCollection.findOne(query);
+        res.send(result); 
+    })
+
+    app.delete('/booking/:id', async(req,res)=>{
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await bookingCollection.deleteOne(query);
+        res.send(result);
+    })
+
+    app.patch('/booking/:id', async(req,res)=>{
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+
+      const update = req.body;
+      const updateAppointment = {
+        $set: {
+           name: update.name,
+           email: update.email,
+           service: update.service,
+           date: update.date,
+           phone: update.phone,
+           massage: update.massage,
+           phone: update.phone
+        }
+      }
+
+      const result = await bookingCollection.updateOne(query, updateAppointment, options);
+      res.send(result);
+
+    
+    })
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
