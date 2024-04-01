@@ -64,6 +64,11 @@ async function run() {
       res.send({token});
     })
 
+    // demo 
+    app.get('/app', async(req,res)=>{
+      res.send('aminul paise');
+    })
+
     // services routes 
     app.get('/services', async(req, res)=>{
         const cursor = serviceCollection.find();
@@ -95,7 +100,7 @@ async function run() {
       if(decoded.email!==req.query.email){
         return res.send({error:1, message: 'forbidden access'})
       }
-      
+
       let query = {};
       if(req.query?.email){
         query = { email: req.query.email };
