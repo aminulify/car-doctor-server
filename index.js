@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const app = express();
@@ -21,6 +22,26 @@ const client = new MongoClient(uri, {
   }
 });
 
+
+const verifyJWT = (req,res,next) =>{
+  console.log('hitting verifyJWT');
+  // console.log(req.headers.authorization);
+  const authorization = req.headers.authorization;
+  if(!authorization){
+    return res.status(401).send({error:true, message: 'unauthorized access 401'})
+  }
+  const token = authorization.split(' ')[1];
+  console.log('token inside verify jwt',token);
+
+  jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SCRET, (error, decoded)=>{
+    if(error){
+      return res.status(403).send({error: true, message: 'unauthorized access 403'})
+    }
+    req.decoded = decoded;
+    next();
+  })
+}
+
 async function run() {
   try {
 
@@ -31,6 +52,19 @@ async function run() {
 
     const bookingCollection = client.db("carDoctor").collection("booking");
     
+
+    // jwt
+    app.post('/jwt',(req,res)=>{
+      const user = req.body;
+      console.log(user);
+      
+      const token = jwt.sign(user, process.env.JWT_ACCESS_TOKEN_SCRET, {expiresIn: '1d'});
+      // console.log(token);
+      // token have normal number, so token must be convert in object 
+      res.send({token});
+    })
+
+    // services routes 
     app.get('/services', async(req, res)=>{
         const cursor = serviceCollection.find();
         const result = await cursor.toArray();
@@ -45,6 +79,7 @@ async function run() {
         res.send(result);
     })
 
+    // booking routes
     // get data from client side checkout form 
     app.post('/booking', async(req,res)=>{
       const booking = req.body;
@@ -52,8 +87,15 @@ async function run() {
       res.send(result);
     })
 
-    app.get('/booking', async(req,res)=>{     
+    app.get('/booking', verifyJWT, async(req,res)=>{     
+      // console.log(req.headers.authorization);
       // console.log(req.query);
+      const decoded = req.decoded;
+      console.log('came back after verify', decoded);
+      if(decoded.email!==req.query.email){
+        return res.send({error:1, message: 'forbidden access'})
+      }
+      
       let query = {};
       if(req.query?.email){
         query = { email: req.query.email };
