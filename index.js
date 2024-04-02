@@ -56,7 +56,7 @@ async function run() {
     // jwt
     app.post('/jwt',(req,res)=>{
       const user = req.body;
-      console.log(user);
+      // console.log(user);
       
       const token = jwt.sign(user, process.env.JWT_ACCESS_TOKEN_SCRET, {expiresIn: '1d'});
       // console.log(token);
@@ -73,6 +73,7 @@ async function run() {
     app.get('/services', async(req, res)=>{
         const cursor = serviceCollection.find();
         const result = await cursor.toArray();
+        // console.log('next1')
         res.send(result);
     })
 
@@ -81,6 +82,7 @@ async function run() {
         const id = req.params.id;
         const query = { _id: new ObjectId(id) };
         const result = await serviceCollection.findOne(query);
+        // console.log('next2')
         res.send(result);
     })
 
@@ -89,6 +91,7 @@ async function run() {
     app.post('/booking', async(req,res)=>{
       const booking = req.body;
       const result = await bookingCollection.insertOne(booking);
+      // console.log('next3')
       res.send(result);
     })
 
@@ -98,13 +101,15 @@ async function run() {
       const decoded = req.decoded;
       console.log('came back after verify', decoded);
       if(decoded.email!==req.query.email){
+        // console.log('next4')
         return res.send({error:1, message: 'forbidden access'})
       }
 
       let query = {};
       if(req.query?.email){
         query = { email: req.query.email };
-        console.log(query);
+        // console.log(query);
+        // console.log('next5')
       }
       const result = await bookingCollection.find(query).toArray();
       res.send(result);
@@ -115,6 +120,7 @@ async function run() {
         const id = req.params.id;
         const query = { _id: new ObjectId(id) };
         const result = await bookingCollection.findOne(query);
+        // console.log('next7')
         res.send(result); 
     })
 
@@ -122,6 +128,7 @@ async function run() {
         const id = req.params.id;
         const query = { _id: new ObjectId(id) };
         const result = await bookingCollection.deleteOne(query);
+        // console.log('next8')
         res.send(result);
     })
 
@@ -144,6 +151,7 @@ async function run() {
       }
 
       const result = await bookingCollection.updateOne(query, updateAppointment, options);
+      // console.log('next10')
       res.send(result);
 
     
@@ -161,6 +169,7 @@ async function run() {
         }        
       }
       const result = await bookingCollection.updateOne(filter, updateDoc);
+      // console.log('next11')
       res.send(result); 
     })
 
